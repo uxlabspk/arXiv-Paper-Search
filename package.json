@@ -1,0 +1,43 @@
+{
+  "name": "arxiv-paper-search",
+  "version": "1.0.0",
+  "description": "A streamlined Streamlit web application for searching and exploring academic papers from arXiv, the world's largest open-access archive of scientific research.",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "nodemon --watch 'src/**/*.ts' --exec 'tsx src/index.ts'",
+    "build:css": "npx tailwindcss -i ./src/css/main.css -o ./public/css/style.css"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uxlabspk/arXiv-Paper-Search.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/uxlabspk/arXiv-Paper-Search/issues"
+  },
+  "homepage": "https://github.com/uxlabspk/arXiv-Paper-Search#readme",
+  "dependencies": {
+    "axios": "^1.14.0",
+    "dotenv": "^17.4.0",
+    "ejs": "^5.0.1",
+    "express": "^5.2.1",
+    "fast-xml-parser": "^5.5.10"
+  },
+  "devDependencies": {
+    "@types/axios": "^0.9.36",
+    "@types/ejs": "^3.1.5",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.5.2",
+    "autoprefixer": "^10.4.27",
+    "nodemon": "^3.1.14",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.2",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2"
+  }
+}

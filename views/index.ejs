@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>arXiv Search — <%= query || 'Explore Research' %>
+    </title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bg: '#0e0e0e',
+                        surface: '#161616',
+                        surface2: '#1f1f1f',
+                        border: '#2a2a2a',
+                        borderHi: '#3d3d3d',
+                        amber: '#e8a735',
+                        amberDim: '#c08820',
+                        cream: '#f5ead8',
+                        muted: '#7a7a7a',
+                        textBase: '#d9d9d9',
+                        textHi: '#f0f0f0',
+                        red: '#e05252',
+                    },
+                    fontFamily: {
+                        mono: ['"IBM Plex Mono"', 'monospace'],
+                        serif: ['"Libre Baskerville"', 'serif'],
+                        sans: ['"DM Sans"', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        amber: '0 0 0 3px rgba(232,167,53,0.12)',
+                    },
+                    backgroundImage: {
+                        grid: `linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+                               linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)`,
+                    },
+                    backgroundSize: {
+                        grid: '40px 40px',
+                    },
+                    keyframes: {
+                        fadeUp: {
+                            from: { opacity: '0', transform: 'translateY(12px)' },
+                            to: { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        scaleY: {
+                            from: { transform: 'scaleY(0)' },
+                            to: { transform: 'scaleY(1)' },
+                        },
+                    },
+                    animation: {
+                        fadeUp: 'fadeUp 0.4s both',
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        /* Custom properties that can't be done purely in Tailwind utility classes */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Grid texture overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Range slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 3px;
+            background: #2a2a2a;
+            outline: none;
+            margin-top: 12px;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #e8a735;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.3);
+        }
+
+        /* Select arrow */
+        .select-wrap {
+            position: relative;
+        }
+
+        .select-wrap::after {
+            content: '';
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid #7a7a7a;
+            pointer-events: none;
+        }
+
+        select {
+            appearance: none;
+        }
+
+        /* View-mode radio tabs */
+        .view-tabs input[type="radio"] {
+            display: none;
+        }
+
+        .view-tabs input[type="radio"]:checked+.tab-face {
+            background: #e8a735;
+            color: #0e0e0e;
+        }
+
+        /* Logo mark pseudo */
+        .logo-mark::after {
+            content: '';
+            position: absolute;
+            inset: 3px;
+            background: #e8a735;
+            opacity: 0.15;
+        }
+
+        /* Amber left-bar on card hover */
+        .paper-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .paper-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #e8a735;
+            transform: scaleY(0);
+            transform-origin: bottom;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .paper-card:hover::before {
+            transform: scaleY(1);
+        }
+
+        /* Staggered animation delays */
+        .paper-card:nth-child(1) {
+            animation-delay: 0.03s;
+        }
+
+        .paper-card:nth-child(2) {
+            animation-delay: 0.06s;
+        }
+
+        .paper-card:nth-child(3) {
+            animation-delay: 0.09s;
+        }
+
+        .paper-card:nth-child(4) {
+            animation-delay: 0.12s;
+        }
+
+        .paper-card:nth-child(5) {
+            animation-delay: 0.15s;
+        }
+
+        .paper-card:nth-child(6) {
+            animation-delay: 0.18s;
+        }
+
+        .paper-card:nth-child(7) {
+            animation-delay: 0.21s;
+        }
+
+        .paper-card:nth-child(8) {
+            animation-delay: 0.24s;
+        }
+
+        .paper-card:nth-child(n+9) {
+            animation-delay: 0.27s;
+        }
+
+        /* Line-clamp helpers (Tailwind v3 has these but the CDN play version may not) */
+        .line-clamp-1 {
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body class="font-sans bg-bg text-textBase min-h-screen overflow-x-hidden antialiased">
+
+    <!-- Ambient glow orbs -->
+    <div class="fixed rounded-full pointer-events-none z-0 w-[600px] h-[600px] -top-[200px] -left-[150px] blur-[120px]"
+        style="background:rgba(232,167,53,0.06)"></div>
+    <div class="fixed rounded-full pointer-events-none z-0 w-[400px] h-[400px] bottom-[10%] -right-[100px] blur-[120px]"
+        style="background:rgba(100,140,255,0.04)"></div>
+
+    <!-- ── HEADER ─────────────────────────────────────────── -->
+    <header class="sticky top-0 z-[100] bg-bg/85 backdrop-blur-xl border-b border-border">
+        <div class="container mx-auto px-7 h-16 flex items-center justify-between">
+
+            <a href="/" class="flex items-center gap-3.5 no-underline">
+                <div class="logo-mark w-9 h-9 border border-amber flex items-center justify-center relative">
+                    <svg class="w-[18px] h-[18px] text-amber relative z-10" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <span class="font-mono text-[15px] font-semibold text-textHi tracking-[0.05em]">
+                    arXiv<span class="text-amber">Search</span>
+                </span>
+            </a>
+
+            <div class="hidden md:flex items-center gap-6">
+                <span class="font-mono text-[11px] text-muted tracking-[0.08em] uppercase">Academic Discovery</span>
+                <div class="w-px h-5 bg-border"></div>
+                <a href="#"
+                    class="text-[13px] font-medium text-muted hover:text-textHi transition-colors no-underline">Docs</a>
+                <a href="#"
+                    class="text-[13px] font-medium text-muted hover:text-textHi transition-colors no-underline">API</a>
+                <a href="https://github.com"
+                    class="text-[13px] font-medium text-muted hover:text-textHi transition-colors no-underline">GitHub</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── MAIN ────────────────────────────────────────────── -->
+    <div class="relative z-[1]">
+        <div class="grid grid-cols-1 md:grid-cols-[300px_1fr] min-h-[calc(100vh-64px)]">
+
+            <!-- ── SIDEBAR ───────────────────────────────── -->
+            <aside
+                class="border-b md:border-b-0 md:border-r border-border px-7 py-9 md:sticky md:top-16 md:h-[calc(100vh-64px)] md:overflow-y-auto flex flex-col gap-9
+                          [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-sm">
+
+                <div>
+                    <div
+                        class="font-mono text-[10px] font-medium tracking-[0.15em] uppercase text-muted pb-3 border-b border-border mb-5">
+                        Search Parameters
+                    </div>
+
+                    <form action="/" method="GET">
+
+                        <!-- Query -->
+                        <div class="mb-6">
+                            <label class="block text-[12px] font-medium text-muted tracking-[0.04em] uppercase mb-2"
+                                for="query-input">Query</label>
+                            <input type="text" id="query-input" name="query" value="<%= query %>"
+                                placeholder="e.g. Transformers, RLHF…" class="w-full bg-surface border border-border rounded-none px-3.5 py-[11px]
+                                          font-sans text-sm text-textHi outline-none placeholder-muted
+                                          focus:border-amber focus:shadow-amber transition-[border-color,box-shadow]">
+                        </div>
+
+                        <!-- Max Results -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="text-[12px] font-medium text-muted tracking-[0.04em] uppercase">Max
+                                    Results</label>
+                                <span id="range-display" class="font-mono text-[13px] font-semibold text-amber">
+                                    <%= maxResults %>
+                                </span>
+                            </div>
+                            <input type="range" name="max_results" id="max-results-range" min="5" max="100" step="5"
+                                value="<%= maxResults %>"
+                                oninput="document.getElementById('range-display').textContent = this.value">
+                        </div>
+
+                        <!-- Sort By -->
+                        <div class="mb-6">
+                            <label class="block text-[12px] font-medium text-muted tracking-[0.04em] uppercase mb-2"
+                                for="sort-select">Sort By</label>
+                            <div class="select-wrap">
+                                <select id="sort-select" name="sort_by" class="w-full bg-surface border border-border rounded-none px-3.5 py-[11px]
+                                               font-sans text-sm text-textHi outline-none cursor-pointer
+                                               focus:border-amber transition-[border-color]">
+                                    <option value="submittedDate" <%=sortBy==='submittedDate' ? 'selected' : '' %>
+                                        >Submitted Date</option>
+                                    <option value="relevance" <%=sortBy==='relevance' ? 'selected' : '' %>>Relevance
+                                    </option>
+                                    <option value="lastUpdatedDate" <%=sortBy==='lastUpdatedDate' ? 'selected' : '' %>
+                                        >Last Updated</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- View Mode -->
+                        <div class="mb-6">
+                            <label
+                                class="block text-[12px] font-medium text-muted tracking-[0.04em] uppercase mb-2">View
+                                Mode</label>
+                            <div class="view-tabs grid grid-cols-2 border border-border">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="view_as" value="Cards" <%=viewMode==='Cards' ? 'checked'
+                                        : '' %>>
+                                    <div class="tab-face flex items-center justify-center gap-2 px-2.5 py-2.5
+                                                text-[13px] font-medium text-muted border-r border-border
+                                                transition-[background,color]">
+                                        <svg class="w-[15px] h-[15px]" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor" stroke-width="2">
+                                            <rect x="3" y="3" width="7" height="7" rx="1" />
+                                            <rect x="14" y="3" width="7" height="7" rx="1" />
+                                            <rect x="3" y="14" width="7" height="7" rx="1" />
+                                            <rect x="14" y="14" width="7" height="7" rx="1" />
+                                        </svg>
+                                        Cards
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="view_as" value="Table" <%=viewMode==='Table' ? 'checked'
+                                        : '' %>>
+                                    <div class="tab-face flex items-center justify-center gap-2 px-2.5 py-2.5
+                                                text-[13px] font-medium text-muted
+                                                transition-[background,color]">
+                                        <svg class="w-[15px] h-[15px]" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path d="M3 6h18M3 12h18M3 18h18" />
+                                        </svg>
+                                        Table
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Submit -->
+                        <button type="submit" class="w-full bg-amber text-bg border-none px-5 py-[13px]
+                                       font-mono text-[13px] font-semibold tracking-[0.08em] uppercase
+                                       flex items-center justify-center gap-2.5 cursor-pointer
+                                       hover:bg-cream transition-[background,transform] hover:-translate-y-px">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            Search Papers
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Export -->
+                <div>
+                    <div
+                        class="font-mono text-[10px] font-medium tracking-[0.15em] uppercase text-muted pb-3 border-b border-border mb-5">
+                        Export
+                    </div>
+                    <button onclick="exportCSV()" class="w-full bg-transparent text-muted border border-border px-5 py-[11px]
+                                   font-mono text-[11px] font-medium tracking-[0.1em] uppercase
+                                   flex items-center justify-center gap-2.5 cursor-pointer
+                                   hover:border-amber hover:text-amber transition-[border-color,color]">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Download CSV
+                    </button>
+                </div>
+            </aside>
+
+            <!-- ── CONTENT ────────────────────────────────── -->
+            <main class="px-5 py-9 md:px-10 min-w-0">
+
+                <% if (error) { %>
+                    <!-- Error state -->
+                    <div class="flex flex-col items-center justify-center min-h-[480px] text-center gap-4">
+                        <div class="w-[72px] h-[72px] border border-red flex items-center justify-center mb-2">
+                            <svg class="w-8 h-8 text-red" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <h2 class="font-serif text-[22px] text-red">Request Failed</h2>
+                        <p class="text-sm text-[#c07070] max-w-[340px] leading-relaxed">
+                            <%= error %>
+                        </p>
+                    </div>
+
+                    <% } else if (papers.length===0) { %>
+                        <!-- Empty state -->
+                        <div class="flex flex-col items-center justify-center min-h-[480px] text-center gap-4">
+                            <div class="w-[72px] h-[72px] border border-border flex items-center justify-center mb-2">
+                                <svg class="w-8 h-8 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                    stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <h2 class="font-serif text-[22px] text-textHi">No papers found</h2>
+                            <p class="text-sm text-muted max-w-[340px] leading-relaxed">Adjust your search terms or
+                                broaden your query to discover more research.</p>
+                        </div>
+
+                        <% } else { %>
+
+                            <!-- Results header -->
+                            <div class="flex items-end justify-between mb-8 pb-5 border-b border-border">
+                                <div class="font-serif text-[28px] text-textHi italic">
+                                    "<em class="text-amber not-italic">
+                                        <%= query %>
+                                    </em>"
+                                </div>
+                                <div class="font-mono text-[12px] text-muted tracking-[0.06em]">
+                                    <strong class="text-amber">
+                                        <%= papers.length %>
+                                    </strong> papers retrieved
+                                </div>
+                            </div>
+
+                            <!-- ── CARDS VIEW ──── -->
+                            <% if (viewMode==='Cards' ) { %>
+                                <div class="flex flex-col gap-0.5">
+                                    <% papers.forEach((paper, index)=> { %>
+                                        <article
+                                            class="paper-card bg-surface border border-border px-8 py-7 animate-fadeUp
+                                                hover:border-borderHi hover:bg-surface2 transition-[border-color,background]">
+                                            <!-- Top row -->
+                                            <div class="flex items-center gap-3 mb-3.5">
+                                                <span class="font-mono text-[11px] text-muted min-w-[28px]">/<%=
+                                                        String(index + 1).padStart(2, '0' ) %></span>
+                                                <span class="font-mono text-[11px] text-amber px-2.5 py-0.5 border"
+                                                    style="background:rgba(232,167,53,0.12);border-color:rgba(232,167,53,0.2)">
+                                                    <%= paper.date %>
+                                                </span>
+                                            </div>
+
+                                            <h2 class="font-serif text-[19px] font-bold text-textHi leading-snug mb-2.5
+                                               group-hover:text-amber transition-colors">
+                                                <%= paper.title %>
+                                            </h2>
+
+                                            <div class="flex items-start gap-2 text-[13px] text-muted mb-4">
+                                                <svg class="w-3.5 h-3.5 flex-shrink-0 mt-[1px]" fill="none"
+                                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                </svg>
+                                                <span class="line-clamp-1">
+                                                    <%= paper.authors %>
+                                                </span>
+                                            </div>
+
+                                            <p class="text-sm leading-[1.7] text-[#8a8a8a] line-clamp-3 mb-5
+                                              pl-4 border-l border-border">
+                                                <%= paper.abstract %>
+                                            </p>
+
+                                            <div class="flex gap-2.5">
+                                                <a href="<%= paper.url %>" target="_blank" class="inline-flex items-center gap-[7px] px-4 py-2
+                                                  font-mono text-[12px] font-medium tracking-[0.04em] no-underline
+                                                  bg-textHi text-bg hover:bg-amber transition-colors">
+                                                    Abstract
+                                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"
+                                                        stroke="currentColor" stroke-width="2.5">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                                    </svg>
+                                                </a>
+                                                <a href="<%= paper.pdf_url %>" target="_blank" class="inline-flex items-center gap-[7px] px-4 py-2
+                                                  font-mono text-[12px] font-medium tracking-[0.04em] no-underline
+                                                  bg-transparent text-muted border border-border
+                                                  hover:border-amber hover:text-amber transition-[border-color,color]">
+                                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"
+                                                        stroke="currentColor" stroke-width="2">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                    </svg>
+                                                    PDF
+                                                </a>
+                                            </div>
+                                        </article>
+                                        <% }) %>
+                                </div>
+
+                                <!-- ── TABLE VIEW ──── -->
+                                <% } else { %>
+                                    <div class="border border-border overflow-x-auto
+                                    [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:bg-border">
+                                        <table class="w-full border-collapse text-sm">
+                                            <thead>
+                                                <tr class="bg-surface border-b border-border">
+                                                    <th
+                                                        class="font-mono text-[10px] font-semibold tracking-[0.12em] uppercase text-muted px-5 py-3.5 text-left whitespace-nowrap">
+                                                        #</th>
+                                                    <th
+                                                        class="font-mono text-[10px] font-semibold tracking-[0.12em] uppercase text-muted px-5 py-3.5 text-left whitespace-nowrap">
+                                                        Date</th>
+                                                    <th
+                                                        class="font-mono text-[10px] font-semibold tracking-[0.12em] uppercase text-muted px-5 py-3.5 text-left whitespace-nowrap">
+                                                        Title</th>
+                                                    <th
+                                                        class="font-mono text-[10px] font-semibold tracking-[0.12em] uppercase text-muted px-5 py-3.5 text-left whitespace-nowrap">
+                                                        Authors</th>
+                                                    <th
+                                                        class="font-mono text-[10px] font-semibold tracking-[0.12em] uppercase text-muted px-5 py-3.5 text-left whitespace-nowrap">
+                                                        Links</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% papers.forEach((paper, index)=> { %>
+                                                    <tr
+                                                        class="border-b border-border last:border-b-0 hover:bg-surface2 transition-colors">
+                                                        <td
+                                                            class="px-5 py-4 align-middle font-mono text-[11px] text-muted whitespace-nowrap">
+                                                            /<%= String(index+1).padStart(2,'0') %>
+                                                        </td>
+                                                        <td
+                                                            class="px-5 py-4 align-middle font-mono text-[12px] text-amber whitespace-nowrap">
+                                                            <%= paper.date %>
+                                                        </td>
+                                                        <td
+                                                            class="px-5 py-4 align-middle font-medium text-textHi max-w-[380px]">
+                                                            <p class="line-clamp-2 leading-snug">
+                                                                <%= paper.title %>
+                                                            </p>
+                                                        </td>
+                                                        <td
+                                                            class="px-5 py-4 align-middle text-[13px] text-muted max-w-[200px]">
+                                                            <p class="line-clamp-2">
+                                                                <%= paper.authors %>
+                                                            </p>
+                                                        </td>
+                                                        <td class="px-5 py-4 align-middle whitespace-nowrap">
+                                                            <a href="<%= paper.url %>" target="_blank"
+                                                                class="inline-flex items-center gap-1.5 px-3 py-1.5
+                                                          font-mono text-[11px] font-medium tracking-[0.04em] no-underline
+                                                          bg-amber border border-amber text-bg
+                                                          hover:bg-cream hover:border-cream transition-[background,border-color]">
+                                                                Abstract
+                                                            </a>
+                                                            <a href="<%= paper.pdf_url %>" target="_blank"
+                                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 ml-1.5
+                                                          font-mono text-[11px] font-medium tracking-[0.04em] no-underline
+                                                          bg-transparent border border-border text-muted
+                                                          hover:border-amber hover:text-amber transition-[border-color,color]">
+                                                                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24"
+                                                                    stroke="currentColor" stroke-width="2">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                                </svg>
+                                                                PDF
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                    <% }) %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <% } %>
+
+                                        <% } %>
+            </main>
+        </div>
+    </div>
+
+    <!-- ── FOOTER ──────────────────────────────────────────── -->
+    <footer class="relative z-[1] border-t border-border px-7 py-5 flex items-center justify-between">
+        <span class="font-mono text-[11px] text-muted tracking-[0.06em]">
+            arXiv<span class="text-amber">Search</span> — Powered by arXiv API
+        </span>
+        <span class="text-[12px] text-muted">Built with Node.js &amp; Express</span>
+    </footer>
+
+    <script>
+        function exportCSV() {
+            const papers = <% - JSON.stringify(papers || []) %>;
+            if (!papers.length) { alert('No data to export.'); return; }
+            const headers = ['Title', 'Authors', 'Date', 'URL', 'PDF URL'];
+            const rows = papers.map(p => [
+                `"${p.title.replace(/"/g, '""')}"`,
+                `"${p.authors.replace(/"/g, '""')}"`,
+                p.date, p.url, p.pdf_url
+            ]);
+            const csv = "data:text/csv;charset=utf-8,"
+                + headers.join(",") + "\n"
+                + rows.map(r => r.join(",")).join("\n");
+            const a = document.createElement("a");
+            a.href = encodeURI(csv);
+            a.download = `arxiv_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+    </script>
+</body>
+
+</html>
