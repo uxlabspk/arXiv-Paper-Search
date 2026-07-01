@@ -20,11 +20,31 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-app.get('/', async (req, res) => {
-  const query = req.query.query as string || 'efficient LLM fine-tuning';
+app.get('/', (req, res) => {
+  res.render('landing', {
+    query: '',
+    maxResults: 20,
+    sortBy: SortCriterion.SubmittedDate,
+    viewMode: 'Cards',
+    error: null
+  });
+});
+
+app.get('/search', async (req, res) => {
+  const query = req.query.query as string;
   const maxResults = parseInt(req.query.max_results as string) || 20;
   const sortBy = (req.query.sort_by as string) as SortCriterion || SortCriterion.SubmittedDate;
   const viewMode = (req.query.view_as as string) || 'Cards';
+ 
+  if (!query || query.trim() === '') {
+    return res.render('landing', {
+      query: '',
+      maxResults,
+      sortBy,
+      viewMode,
+      error: 'Please enter a search query'
+    });
+  }
   
   try {
     const papers = await searchArxiv(query, maxResults, sortBy);

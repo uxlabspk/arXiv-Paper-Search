@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>arXiv Search — Explore Research</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bg: '#0e0e0e',
+                        surface: '#161616',
+                        surface2: '#1f1f1f',
+                        border: '#2a2a2a',
+                        borderHi: '#3d3d3d',
+                        amber: '#e8a735',
+                        amberDim: '#c08820',
+                        cream: '#f5ead8',
+                        muted: '#7a7a7a',
+                        textBase: '#d9d9d9',
+                        textHi: '#f0f0f0',
+                        red: '#e05252',
+                    },
+                    fontFamily: {
+                        mono: ['"IBM Plex Mono"', 'monospace'],
+                        serif: ['"Libre Baskerville"', 'serif'],
+                        sans: ['"DM Sans"', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        amber: '0 0 0 3px rgba(232,167,53,0.12)',
+                    },
+                    backgroundImage: {
+                        grid: `linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+                               linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)`,
+                    },
+                    backgroundSize: {
+                        grid: '40px 40px',
+                    },
+                    keyframes: {
+                        fadeUp: {
+                            from: { opacity: '0', transform: 'translateY(12px)' },
+                            to: { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        scaleY: {
+                            from: { transform: 'scaleY(0)' },
+                            to: { transform: 'scaleY(1)' },
+                        },
+                    },
+                    animation: {
+                        fadeUp: 'fadeUp 0.4s both',
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 3px;
+            background: #2a2a2a;
+            outline: none;
+            margin-top: 12px;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #e8a735;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.3);
+        }
+
+        .select-wrap {
+            position: relative;
+        }
+
+        .select-wrap::after {
+            content: '';
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid #7a7a7a;
+            pointer-events: none;
+        }
+
+        select {
+            appearance: none;
+        }
+
+        .view-tabs input[type="radio"] {
+            display: none;
+        }
+
+        .view-tabs input[type="radio"]:checked+.tab-face {
+            background: #e8a735;
+            color: #0e0e0e;
+        }
+
+        .logo-mark::after {
+            content: '';
+            position: absolute;
+            inset: 3px;
+            background: #e8a735;
+            opacity: 0.15;
+        }
+
+        .line-clamp-1 {
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body class="font-sans bg-bg text-textBase min-h-screen overflow-x-hidden antialiased">
+
+    <!-- Ambient glow orbs -->
+    <div class="fixed rounded-full pointer-events-none z-0 w-[600px] h-[600px] -top-[200px] -left-[150px] blur-[120px]"
+        style="background:rgba(232,167,53,0.06)"></div>
+    <div class="fixed rounded-full pointer-events-none z-0 w-[400px] h-[400px] bottom-[10%] -right-[100px] blur-[120px]"
+        style="background:rgba(100,140,255,0.04)"></div>
+
+    <!-- HEADER -->
+    <header class="sticky top-0 z-[100] bg-bg/85 backdrop-blur-xl border-b border-border">
+        <div class="container mx-auto px-7 h-16 flex items-center justify-between">
+
+            <a href="/" class="flex items-center gap-3.5 no-underline">
+                <div class="logo-mark w-9 h-9 border border-amber flex items-center justify-center relative">
+                    <svg class="w-[18px] h-[18px] text-amber relative z-10" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <span class="font-mono text-[15px] font-semibold text-textHi tracking-[0.05em]">
+                    arXiv<span class="text-amber">Search</span>
+                </span>
+            </a>
+
+            <div class="hidden md:flex items-center gap-6">
+                <span class="font-mono text-[11px] text-muted tracking-[0.08em] uppercase">Academic Discovery</span>
+                <div class="w-px h-5 bg-border"></div>
+                <a href="https://github.com/uxlabspk/arXiv-Paper-Search"
+                    class="text-[13px] font-medium text-muted hover:text-textHi transition-colors no-underline">GitHub</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN -->
+    <div class="relative z-[1]">
+        <div class="min-h-[calc(100vh-64px)] flex items-center justify-center px-5 py-9 md:py-16">
+            <!-- LANDING CONTENT -->
+            <div class="w-full max-w-2xl mx-auto text-center animate-fadeUp">
+                <!-- Logo/Icon -->
+                <div class="w-20 h-20 mx-auto mb-8 border border-amber flex items-center justify-center relative rounded-lg">
+                    <svg class="w-10 h-10 text-amber relative z-10" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <div class="absolute inset-2 border border-amber/20 rounded"></div>
+                </div>
+
+                <!-- Title -->
+                <h1 class="font-serif text-[42px] md:text-[52px] text-textHi italic mb-4 leading-tight">
+                    Explore <em class="text-amber not-italic">arXiv</em> Papers
+                </h1>
+
+                <p class="text-lg text-muted mb-12 max-w-md mx-auto">
+                    Search and discover academic papers from the world's largest open-access archive of scientific research.
+                </p>
+
+                <!-- SEARCH FORM -->
+                <div class="bg-surface border border-border rounded-lg px-8 py-9 max-w-lg mx-auto">
+                    <form action="/search" method="GET">
+                        <!-- Query -->
+                        <div class="mb-6">
+                            <label class="block text-left text-[12px] font-medium text-muted tracking-[0.04em] uppercase mb-2"
+                                for="query-input">Search Query</label>
+                            <input type="text" id="query-input" name="query" value="<%= query %>"
+                                placeholder="e.g. Transformers, RLHF, diffusion models..." 
+                                autocomplete="off"
+                                class="w-full bg-bg border border-border rounded-none px-3.5 py-[11px]
+                                          font-sans text-sm text-textHi outline-none placeholder-muted
+                                          focus:border-amber focus:shadow-amber transition-[border-color,box-shadow]">
+                        </div>
+
+                        <!-- Max Results -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="text-left text-[12px] font-medium text-muted tracking-[0.04em] uppercase">Max
+                                    Results</label>
+                                <span id="range-display" class="font-mono text-[13px] font-semibold text-amber">
+                                    <%= maxResults %>
+                                </span>
+                            </div>
+                            <input type="range" name="max_results" id="max-results-range" min="5" max="100" step="5"
+                                value="<%= maxResults %>"
+                                oninput="document.getElementById('range-display').textContent = this.value">
+                        </div>
+
+                        <!-- Sort By -->
+                        <div class="mb-6">
+                            <label class="block text-left text-[12px] font-medium text-muted tracking-[0.04em] uppercase mb-2"
+                                for="sort-select">Sort By</label>
+                            <div class="select-wrap">
+                                <select id="sort-select" name="sort_by" class="w-full bg-bg border border-border rounded-none px-3.5 py-[11px]
+                                               font-sans text-sm text-textHi outline-none cursor-pointer
+                                               focus:border-amber transition-[border-color]">
+                                    <option value="submittedDate" <%=sortBy==='submittedDate' ? 'selected' : '' %>
+                                        >Submitted Date</option>
+                                    <option value="relevance" <%=sortBy==='relevance' ? 'selected' : '' %>>Relevance
+                                    </option>
+                                    <option value="lastUpdatedDate" <%=sortBy==='lastUpdatedDate' ? 'selected' : '' %>
+                                        >Last Updated</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- View Mode -->
+                        <div class="mb-8">
+                            <label
+                                class="block text-left text-[12px] font-medium text-muted tracking-[0.04em] uppercase mb-2">View
+                                Mode</label>
+                            <div class="view-tabs grid grid-cols-2 border border-border">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="view_as" value="Cards" <%=viewMode==='Cards' ? 'checked'
+                                        : '' %>>
+                                    <div class="tab-face flex items-center justify-center gap-2 px-2.5 py-2.5
+                                                text-[13px] font-medium text-muted border-r border-border
+                                                transition-[background,color]">
+                                        <svg class="w-[15px] h-[15px]" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor" stroke-width="2">
+                                            <rect x="3" y="3" width="7" height="7" rx="1" />
+                                            <rect x="14" y="3" width="7" height="7" rx="1" />
+                                            <rect x="3" y="14" width="7" height="7" rx="1" />
+                                            <rect x="14" y="14" width="7" height="7" rx="1" />
+                                        </svg>
+                                        Cards
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="view_as" value="Table" <%=viewMode==='Table' ? 'checked'
+                                        : '' %>>
+                                    <div class="tab-face flex items-center justify-center gap-2 px-2.5 py-2.5
+                                                text-[13px] font-medium text-muted
+                                                transition-[background,color]">
+                                        <svg class="w-[15px] h-[15px]" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path d="M3 6h18M3 12h18M3 18h18" />
+                                        </svg>
+                                        Table
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Submit -->
+                        <button type="submit" class="w-full bg-amber text-bg border-none px-5 py-[13px]
+                                       font-mono text-[13px] font-semibold tracking-[0.08em] uppercase
+                                       flex items-center justify-center gap-2.5 cursor-pointer
+                                       hover:bg-cream transition-[background,transform] hover:-translate-y-px">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            Search Papers
+                        </button>
+                    </form>
+                </div>
+
+                <% if (error) { %>
+                    <div class="mt-6 p-4 bg-red/10 border border-red/30 rounded">
+                        <p class="text-red text-sm"><%= error %></p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="relative z-[1] border-t border-border px-7 py-5 flex items-center justify-between">
+        <span class="font-mono text-[11px] text-muted tracking-[0.06em]">
+            arXiv<span class="text-amber">Search</span> — Powered by arXiv API
+        </span>
+        <span class="text-[12px] text-muted">Built with Node.js &amp; Express</span>
+    </footer>
+
+</body>
+
+</html>
