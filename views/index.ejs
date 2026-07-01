@@ -456,10 +456,25 @@
                                         <%= query %>
                                     </em>"
                                 </div>
-                                <div class="font-mono text-[12px] text-muted tracking-[0.06em]">
-                                    <strong class="text-amber">
-                                        <%= papers.length %>
-                                    </strong> papers retrieved
+                                <div class="text-right">
+                                    <div class="font-mono text-[12px] text-muted tracking-[0.06em]">
+                                        <strong class="text-amber">
+                                            <%= papers.length %>
+                                        </strong> papers retrieved
+                                    </div>
+                                    <% if (aiStats && aiStats.rejectedCount > 0) { %>
+                                        <div class="font-mono text-[10px] text-amber mt-1 tracking-[0.04em]">
+                                            AI filtered: <%= aiStats.approvedCount %> approved, <%= aiStats.rejectedCount %> rejected
+                                        </div>
+                                    <% } else if (aiStats && aiStats.totalFiltered > 0) { %>
+                                        <div class="font-mono text-[10px] text-muted mt-1 tracking-[0.04em]">
+                                            All <%= aiStats.totalFiltered %> papers AI-approved
+                                        </div>
+                                    <% } else if (aiEnabled) { %>
+                                        <div class="font-mono text-[10px] text-muted mt-1 tracking-[0.04em]">
+                                            AI filtering active
+                                        </div>
+                                    <% } %>
                                 </div>
                             </div>
 

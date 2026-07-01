@@ -161,6 +161,22 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
+
+        /* AI Toggle Switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #e8a735;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #e8a735;
+        }
+        .toggle-checkbox:checked + .toggle-label .inner-circle {
+            transform: translateX(calc(100% - 4px));
+            background-color: #0e0e0e;
+        }
+        .toggle-checkbox:focus:checked + .toggle-label {
+            box-shadow: 0 0 0 3px rgba(232, 167, 53, 0.12);
+        }
     </style>
 </head>
 
@@ -268,6 +284,32 @@
                                 </select>
                             </div>
                         </div>
+
+                        <% if (typeof aiEnabled !== 'undefined') { %>
+                        <!-- AI Filter Toggle -->
+                        <div class="mb-6">
+                            <div class="flex items-center justify-between">
+                                <label class="text-left text-[12px] font-medium text-muted tracking-[0.04em] uppercase cursor-pointer">
+                                    AI Filter Results
+                                    <span class="text-amber ml-2 text-xs">
+                                        <%= aiEnabled ? '(Enabled)' : '(Disabled - No API Key)' %>
+                                    </span>
+                                </label>
+                                <div class="relative inline-block w-10 mr-2 align-middle select-none">
+                                    <input type="checkbox" name="ai_filter" value="true" 
+                                        <%= aiEnabled ? 'checked' : '' %>
+                                        <%= !aiEnabled ? 'disabled' : '' %>
+                                        id="ai-filter-toggle"
+                                        class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-bg border border-border appearance-none cursor-pointer focus:outline-none focus:shadow-amber">
+                                    <label for="ai-filter-toggle" 
+                                        class="toggle-label block overflow-hidden h-6 rounded-full bg-border cursor-pointer transition-colors <%= !aiEnabled ? 'opacity-50 cursor-not-allowed' : '' %>">
+                                        <span class="inner-circle block w-4 h-4 rounded-full bg-textHi shadow absolute top-1 left-1 transition-transform"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <p class="text-xs text-muted mt-1">Filter results using Mistral AI for better relevance</p>
+                        </div>
+                        <% } %>
 
                         <!-- View Mode -->
                         <div class="mb-8">

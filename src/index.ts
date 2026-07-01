@@ -1,18 +1,26 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import path from 'path';
-import dotenv from 'dotenv';
-import { searchArxiv, SortCriterion } from './services/arxiv.service';
+import { searchArxiv, SortCriterion, AIFilterResult } from './services/arxiv.service';
+import { isAIEnabled } from './services/ai.service';
 
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-
-dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Check AI configuration on startup
+if (isAIEnabled()) {
+  console.log('AI filtering is ENABLED');
+} else {
+  console.log('AI filtering is DISABLED - papers will not be filtered by AI');
+}
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../views'));
@@ -26,7 +34,8 @@ app.get('/', (req, res) => {
     maxResults: 20,
     sortBy: SortCriterion.SubmittedDate,
     viewMode: 'Cards',
-    error: null
+    error: null,
+    aiEnabled: isAIEnabled()
   });
 });
 
@@ -35,6 +44,7 @@ app.get('/search', async (req, res) => {
   const maxResults = parseInt(req.query.max_results as string) || 20;
   const sortBy = (req.query.sort_by as string) as SortCriterion || SortCriterion.SubmittedDate;
   const viewMode = (req.query.view_as as string) || 'Cards';
+  const useAIFilter = req.query.ai_filter !== 'false' && req.query.ai_filter !== '0';
  
   if (!query || query.trim() === '') {
     return res.render('landing', {
@@ -42,19 +52,28 @@ app.get('/search', async (req, res) => {
       maxResults,
       sortBy,
       viewMode,
-      error: 'Please enter a search query'
+      error: 'Please enter a search query',
+      aiEnabled: isAIEnabled()
     });
   }
   
   try {
-    const papers = await searchArxiv(query, maxResults, sortBy);
+    const result: AIFilterResult = await searchArxiv(query, maxResults, sortBy, useAIFilter);
+    
     res.render('index', { 
-      papers, 
-      query, 
+      papers: result.papers, 
+      query: result.query,
       maxResults, 
       sortBy, 
       viewMode,
-      error: null 
+      error: null,
+      aiEnabled: result.aiEnabled,
+      aiStats: {
+        approvedCount: result.approvedCount,
+        rejectedCount: result.rejectedCount,
+        totalFiltered: result.rejectedCount > 0 ? result.approvedCount + result.rejectedCount : 0
+      },
+      aiResults: result.aiResults
     });
   } catch (error) {
     res.render('index', { 
@@ -63,7 +82,9 @@ app.get('/search', async (req, res) => {
       maxResults, 
       sortBy, 
       viewMode,
-      error: 'Error searching arXiv. Please try again.' 
+      error: 'Error searching arXiv. Please try again.',
+      aiEnabled: isAIEnabled(),
+      aiStats: null
     });
   }
 });

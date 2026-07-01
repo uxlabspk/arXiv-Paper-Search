@@ -7,6 +7,7 @@ A modern, dark-themed web application for searching and exploring academic paper
 ## Features
 
 - **Full-text arXiv Search** — Query papers by keyword across all fields via the arXiv API
+- **AI-Powered Filtering** — Results are automatically filtered by Mistral AI for better relevance (optional)
 - **Sort Options** — Sort results by Submitted Date, Relevance, or Last Updated
 - **Configurable Result Count** — Retrieve 5–100 papers per search using a range slider
 - **Dual View Modes** — Switch between a Cards view (with abstracts) and a compact Table view
@@ -36,12 +37,15 @@ arxiv-paper-search/
 │   ├── css/
 │   │   └── main.css            # Tailwind CSS source
 │   └── services/
-│       └── arxiv.service.ts    # arXiv API integration & Paper types
+│       ├── arxiv.service.ts    # arXiv API integration & Paper types
+│       └── ai.service.ts       # Mistral AI filtering service
 ├── views/
-│   └── index.ejs               # Main EJS template (search UI)
+│   ├── index.ejs               # Main EJS template (search results)
+│   └── landing.ejs             # Landing page with search form
 ├── public/
 │   └── css/
 │       └── style.css           # Compiled Tailwind output (gitignored)
+├── .env.example                # Environment variables template
 ├── tailwind.config.js
 ├── postcss.config.js
 ├── tsconfig.json
@@ -70,11 +74,19 @@ arxiv-paper-search/
    npm install
    ```
 
-3. (Optional) Create a `.env` file to configure the port:
+3. (Optional) Create a `.env` file to configure the port and AI settings:
 
    ```env
    PORT=3000
+   MISTRAL_API_KEY=your_mistral_api_key_here
+   AI_FILTER_ENABLED=true
    ```
+
+   **AI Configuration:**
+   - `MISTRAL_API_KEY`: Get your API key from [Mistral AI Console](https://console.mistral.ai/)
+   - `AI_FILTER_ENABLED`: Set to `true` to enable AI filtering of search results
+   - `MISTRAL_MODEL`: (Optional) Model to use (default: `mistral-tiny-latest`)
+   - `MISTRAL_ENDPOINT`: (Optional) Custom API endpoint
 
 ### Running the App
 
@@ -96,13 +108,44 @@ The app will be available at [http://localhost:3000](http://localhost:3000).
 
 1. Enter a search query in the sidebar (e.g., `attention mechanism`, `RLHF`, `diffusion models`)
 2. Adjust the **Max Results** slider (5–100)
-3. Choose a **Sort By** option: Submitted Date, Relevance, or Last Updated
-4. Select **Cards** or **Table** view mode
-5. Click **Search Papers**
-6. Click **Abstract** to open the paper on arXiv, or **PDF** to open the PDF directly
-7. Click **Download CSV** to export the current results
+3. Toggle **AI Filter Results** to enable/disable AI-powered relevance filtering
+4. Choose a **Sort By** option: Submitted Date, Relevance, or Last Updated
+5. Select **Cards** or **Table** view mode
+6. Click **Search Papers**
+7. View AI filtering status in the results header
+8. Click **Abstract** to open the paper on arXiv, or **PDF** to open the PDF directly
+9. Click **Download CSV** to export the current results
 
-## API
+## AI-Powered Filtering
+
+The application includes optional AI-powered filtering using the **Mistral AI API**. When enabled, each paper returned by arXiv is evaluated by Mistral AI to determine its relevance to your search query.
+
+### How it works:
+1. You perform a search query
+2. The app fetches results from arXiv API
+3. Each paper is sent to Mistral AI for relevance evaluation
+4. Only papers approved by AI are shown in the results
+5. You can see filtering statistics in the results header
+
+### AI Features:
+- **Relevance Scoring**: AI evaluates paper titles, abstracts, and authors against your query
+- **Transparent Filtering**: See how many papers were approved vs. rejected
+- **Toggle On/Off**: Enable or disable AI filtering per search via the form toggle
+- **Fail-Open Design**: If AI service fails, papers are still shown (not blocked)
+- **Parallel Processing**: Multiple papers are evaluated simultaneously for performance
+
+### AI Configuration:
+```typescript
+// In src/services/ai.service.ts
+interface AIConfig {
+  apiKey: string;           // Your Mistral API key
+  model: string;            // Model to use (default: mistral-tiny-latest)
+  endpoint: string;         // API endpoint
+  enabled: boolean;         // Enable/disable AI filtering
+}
+```
+
+## arXiv API
 
 The application queries the official [arXiv API](https://arxiv.org/help/api/index) — no API key required.
 

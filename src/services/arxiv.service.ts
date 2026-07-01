@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { XMLParser } from 'fast-xml-parser';
+import { filterPapersWithAI, AIResponse } from './ai.service';
 
 export interface Paper {
   title: string;
@@ -21,7 +22,21 @@ const parser = new XMLParser({
   attributeNamePrefix: "@_"
 });
 
-export const searchArxiv = async (query: string, maxResults: number, sortBy: SortCriterion): Promise<Paper[]> => {
+export interface AIFilterResult {
+  papers: Paper[];
+  aiResults: AIResponse[];
+  approvedCount: number;
+  rejectedCount: number;
+  query: string;
+  aiEnabled: boolean;
+}
+
+export const searchArxiv = async (
+  query: string, 
+  maxResults: number, 
+  sortBy: SortCriterion,
+  useAIFilter: boolean = true
+): Promise<AIFilterResult> => {
   const url = `http://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(query)}&max_results=${maxResults}&sortBy=${sortBy}&sortOrder=descending`;
   
   try {
@@ -30,7 +45,14 @@ export const searchArxiv = async (query: string, maxResults: number, sortBy: Sor
     const jsonObj = parser.parse(xmlData);
     
     if (!jsonObj.feed || !jsonObj.feed.entry) {
-      return [];
+      return {
+        papers: [],
+        aiResults: [],
+        approvedCount: 0,
+        rejectedCount: 0,
+        query,
+        aiEnabled: false
+      };
     }
     
     let entries = jsonObj.feed.entry;
@@ -38,7 +60,7 @@ export const searchArxiv = async (query: string, maxResults: number, sortBy: Sor
       entries = [entries];
     }
     
-    return entries.map((entry: any) => {
+    const papers: Paper[] = entries.map((entry: any) => {
       let authors = '';
       if (entry.author) {
         if (Array.isArray(entry.author)) {
@@ -60,6 +82,30 @@ export const searchArxiv = async (query: string, maxResults: number, sortBy: Sor
         pdf_url: pdfLink ? pdfLink['@_href'] : entry.id.replace('abs', 'pdf')
       };
     });
+
+    // Apply AI filtering if enabled and requested
+    if (useAIFilter) {
+      const aiResult = await filterPapersWithAI(papers, query);
+      
+      return {
+        papers: aiResult.approved,
+        aiResults: aiResult.results,
+        approvedCount: aiResult.approved.length,
+        rejectedCount: aiResult.rejected.length,
+        query,
+        aiEnabled: true
+      };
+    }
+
+    // Return all papers without AI filtering
+    return {
+      papers: papers,
+      aiResults: [],
+      approvedCount: papers.length,
+      rejectedCount: 0,
+      query,
+      aiEnabled: false
+    };
   } catch (error) {
     console.error('Error searching arXiv:', error);
     throw error;
